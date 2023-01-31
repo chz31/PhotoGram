@@ -33,6 +33,7 @@ if extension == ".obj":
   mtl_filename = base_name + ".mtl"
   mtl_path = os.path.join(obj_dir, mtl_filename)
   
+  #parse the mtl file to look for texture image file name
   if os.path.exists(mtl_path):
     with open(mtl_path) as f:
       lines = f.read().splitlines() 
