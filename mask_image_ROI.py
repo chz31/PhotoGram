@@ -1,23 +1,18 @@
 """
 import os
-filePath = "C:/Users/czhan2/OneDrive/Mouse_Skulls/R_test/photogrammetry/mask_image_ROI.py"
+filePath = "directory/to/mask_image_ROI.py"
 #
-specimenID = "beaver_0"
-#
-setName = "horizontal_gcp"
-volNodeName = 'DSC_0291_gcp'
-rootPath = os.path.join("C:/Users/czhan2/Pictures/digiCamControl/Session1/beavers_burke", specimenID)
+rootPath = "directory/to/the/folder/for/all/photos/of/a/specimen" #the full directory that contains all photos of a specimen
+setName = "vertical_1" #the folder name that contains a particular photo set under the "rootPath"
+volNodeName = 'photo_volumetric_node_name' #the imported volumetric node name
+ROI_name = "Crop Volume ROI"
+
 inputPath = os.path.join(rootPath, setName)
 maskedDir = setName + "_masked"
-croppedDir = setName + "_cropped"
 outputPath_masked = os.path.join(rootPath, maskedDir)
-outputPath_cropped = os.path.join(rootPath, croppedDir)
 
 if not os.path.exists(outputPath_masked):
   os.makedirs(outputPath_masked)
-
-if not os.path.exists(outputPath_cropped):
-  os.makedirs(outputPath_cropped)
 
 exec(open(filePath).read())
 """
@@ -30,13 +25,6 @@ import numpy as np
 volumeNode = slicer.util.getNode(volNodeName) 
 volArrays = slicer.util.arrayFromVolume(volumeNode) 
 
-# ijkToRAS = slicer.util.vtkMatrixFromArray(ijkToRAS)
-# 
-# reader = sitk.ImageFileReader()
-# reader.SetFileName("C:/Users/czhan2/Pictures/digiCamControl/Session1/beavers_burke/beaver_1_34050/horizontal_4/DSC_0740.jpg")
-# image = reader.Execute()
-# 
-# sliceArray = sitk.GetArrayFromImage(image)
 
 imageArr_0 = volArrays[0, :, :, :]
 originalVolumeDimensions = [imageArr_0.shape[1], imageArr_0.shape[0], 64]
@@ -56,7 +44,7 @@ rasToIJK = np.linalg.inv(ijkToRAS)
 
 
 #Get ROI bound
-outputROINode = slicer.util.getNode("Crop Volume ROI") 
+outputROINode = slicer.util.getNode(ROI_name) 
 outputBounds = None
 center = [0.0, 0.0, 0.0]
 radius = [0.0, 0.0, 0.0]
@@ -85,24 +73,10 @@ for i in range(3):
     extent[i*2] = fullExtent[i*2]
   extent[i*2+1] = int(math.ceil(extentIJK.GetBound(i*2+1)+0.5))
 
-# originRAS = np.dot(ijkToRAS, [extent[0], extent[2], extent[4], 1.0])[0:3]
-# ijkToRAS[0:3,3] = originRAS
-
-# shape = [extent[5]-extent[4]+1, extent[3]-extent[2]+1, extent[1]-extent[0]+1]
-
-
-# extent = [1470, 3403, 1421, 2185, 0, 63]
-
-# inputPath = "C:/Users/czhan2/Pictures/digiCamControl/Session1/beavers_burke/82710/vertical_9"
-# inputPath = "C:/Users/czhan2/Pictures/digiCamControl/Session1/beaver_0/64pics_setting/horizontal_up_mid"
 
 fileNamesExt = os.listdir(inputPath)
 fileNames = [os.path.splitext(fileName)[0] for fileName in fileNamesExt]
 
-# outputPath_masked = 'C:/Users/czhan2/Pictures/digiCamControl/Session1//beavers_burke/82710/vertical_9_masked' #Enter output path dir
-# outputPath = 'C:/Users/czhan2/Pictures/digiCamControl/Session1/beaver_0/64pics_setting/horizontal_up_mid_cropped2' #Enter output path dir
-
-# outputPath_cropped = 'C:/Users/czhan2/Pictures/digiCamControl/Session1//beavers_burke/82710/vertical_9_cropped' #Enter output path dir
 
 
 for i in range(volArrays.shape[0]):
@@ -136,25 +110,5 @@ for i in range(volArrays.shape[0]):
   w_jpeg_masked.Write()
   #
   #
-  #cropped image
-  imageArr_cropped = imageArr_cropped[(imageArr.shape[0]-extent[3]+1):(imageArr.shape[0]-extent[2]), 
-                     extent[0]:(extent[1]+1), :] 
-  shape_cropped = imageArr_cropped.shape
-  #
-  flat_img_array_cropped = imageArr_cropped.flatten()
-  vtk_arr_cropped = vtk.util.numpy_support.numpy_to_vtk(num_array=flat_img_array_cropped, deep=True, array_type=vtype)
-  vtk_arr_cropped.SetNumberOfComponents(channel_count)
-  #build a vtkImageData object for the ith image array
-  imgVTK = vtk.vtkImageData()
-  imgVTK.SetDimensions(shape_cropped[1], shape_cropped[0], 1)
-  imgVTK.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 3)
-  imgVTK.GetPointData().SetScalars(vtk_arr_cropped)
-  #w
-  #write cropped image
-  w_jpeg_cropped = vtk.vtkJPEGWriter()
-  w_jpeg_cropped.SetInputData(imgVTK)
-  outFileName_cropped = os.path.join(outputPath_cropped, fileNamesExt[i])
-  w_jpeg_cropped.SetFileName(outFileName_cropped)
-  w_jpeg_cropped.Write()  
 
 
